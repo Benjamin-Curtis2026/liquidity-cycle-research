@@ -4,7 +4,7 @@ Everything the site covers is defined here. Edit tickers or parameters in this f
 the next build (local or GitHub Actions) picks them up.
 """
 
-AUTHOR = "Doug Curtis"
+AUTHOR = "Benjamin Curtis"
 SITE_TITLE = "Liquidity Cycle Research"
 SITE_DESCRIPTION = (
     "Federal Reserve liquidity, weekly trend structure, and the AI-infrastructure, "

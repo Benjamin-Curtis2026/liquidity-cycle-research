@@ -51,16 +51,6 @@ Non-overlapping blocks matter. Overlapping rolling returns share most of their d
 - **Regime dependence.** The sample is dominated by two episodes, 2020–21 QE and 2022–24 QT, and the ON RRP balance has since been largely drained, so the composition of the measure has changed.
 - **Global liquidity is excluded.** ECB, BoJ, and PBoC balance sheets, and the dollar, plausibly matter for Bitcoin. Adding them is a natural extension.
 
-<!--
-## Discussion
-
-AUTHOR: Write this section yourself after reviewing the live results. Questions to address:
-- Which lead (if any) stands out, and does it survive the Bonferroni threshold?
-- Is Bitcoin more liquidity-sensitive than QQQ? Does that fit how you think about the crypto trade?
-- Does the rolling correlation show the relationship is stable, or driven by 2020-2022?
-- What would you change or add next (global liquidity, the dollar, reserves instead of assets)?
-Delete this comment block's opening and closing markers once the section is written.
--->
 
 ## References
 

@@ -36,15 +36,6 @@ For each asset the study reports the average return from the prior close to the 
 - **Daily data miss the pre-announcement drift.** Lucca and Moench (2015) document that U.S. equities earned large excess returns in the 24 hours before scheduled FOMC announcements. Measuring that requires intraday prices.
 - **Small groups.** Hikes and cuts are clustered in a few cycles, so their averages rest on a small number of observations.
 
-<!--
-## Discussion
-
-AUTHOR: Write this section yourself after reviewing the live results. Questions to address:
-- What is the market pricing for the next two years, and do you agree with it?
-- How do decision-day moves in Bitcoin compare with QQQ and TLT?
-- How does the balance-sheet pace interact with the rate path in your view of liquidity?
-Delete this comment block's opening and closing markers once the section is written.
--->
 
 ## References
 

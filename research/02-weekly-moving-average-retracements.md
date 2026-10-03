@@ -57,16 +57,6 @@ Each level's confluence count is the number of other levels within 2.5% of it. A
 - **Selection.** The assets studied are prominent today partly because they went up. Results do not generalize to assets that failed.
 - **Parameter sensitivity.** The 3% band, 10% extension, 26-week lookback, and 13-week cooldown are reasonable but untuned choices. A robustness grid is a planned extension.
 
-<!--
-## Discussion
-
-AUTHOR: Write this section yourself after reviewing the live results. Questions to address:
-- Which averages behave like support for which assets, and which do not?
-- How does the 200W average for Bitcoin compare with the 50W for QQQ or SMH?
-- What do the drawdown and held-4W columns say about the risk of buying the first touch?
-- Which current levels show the most confluence, and how would you size an entry there?
-Delete this comment block's opening and closing markers once the section is written.
--->
 
 ## References
 

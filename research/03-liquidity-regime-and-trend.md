@@ -40,16 +40,6 @@ A separate table compares the asset's average weekly return in the week after an
 - **Taxes and slippage.** Switching realizes gains; a taxable investor's results would differ from the pre-tax figures shown.
 - **One liquidity definition.** The regime uses U.S. net liquidity only.
 
-<!--
-## Discussion
-
-AUTHOR: Write this section yourself after reviewing the live results. Questions to address:
-- Does either filter improve the Sharpe ratio, or mainly cut drawdowns at the cost of return?
-- Is the improvement consistent across both sub-periods and all three assets?
-- Is the liquidity filter adding anything beyond trend, or are they mostly in agreement?
-- How would you implement this in a real portfolio (position sizing, partial exposure, taxes)?
-Delete this comment block's opening and closing markers once the section is written.
--->
 
 ## References
 

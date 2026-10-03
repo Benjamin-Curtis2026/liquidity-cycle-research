@@ -44,13 +44,3 @@ Sector ETFs (SMH, IGV, URA) are shown alongside as a cross-check, since their ho
 - **Equal weighting** gives small, volatile names (AAOI, OKLO, SMR) the same weight as the largest companies.
 - **No fundamentals.** Valuation, earnings revisions, and capital-spending guidance drive these stocks and are not modeled here. Adding hyperscaler capex and forward EV/sales is a planned extension.
 
-<!--
-## Discussion
-
-AUTHOR: Write this section yourself after reviewing the live results. Questions to address:
-- Which layer of the stack is leading and which is lagging, and why do you think that is?
-- Is photonics behaving like a higher-beta version of compute, or does it have its own drivers?
-- What would change your view on the nuclear trade (policy, power contracts, uranium supply)?
-- How does the software layer's trend compare with the hardware layers?
-Delete this comment block's opening and closing markers once the section is written.
--->

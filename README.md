@@ -1,8 +1,8 @@
 # Liquidity Cycle Research
 
-Independent research on how Federal Reserve liquidity and long-term trend structure shape returns in crypto and technology-led equity markets, by Doug Curtis.
+Independent research on how Federal Reserve liquidity and long-term trend structure shape returns in crypto and technology-led equity markets, by Benjamin Curtis.
 
-**Live site: [YOUR-USERNAME.github.io/liquidity-cycle-research](https://YOUR-USERNAME.github.io/liquidity-cycle-research/)**
+**Live site: [benjamin-curtis2026.github.io/liquidity-cycle-research](https://benjamin-curtis2026.github.io/liquidity-cycle-research/)**
 
 The site is rebuilt every weekend by GitHub Actions from public data, so every chart, table, and key finding reflects the latest week rather than a one-time snapshot.
 
@@ -24,7 +24,7 @@ Each study states its question, data, and method, reports results against a base
 FRED + Yahoo Finance  →  src/ (studies)  →  run_all.py  →  site/ (HTML, charts, CSV)  →  GitHub Pages
 ```
 
-1. `src/data.py` downloads FRED series (no API key) and adjusted daily prices, caching each so a failed download falls back to the last good copy.
+1. `src/data.py` downloads FRED series through the official FRED API and adjusted daily prices, caching each so a failed download falls back to the last good copy.
 2. The study modules compute net liquidity and its regime (`liquidity.py`), weekly moving averages, retracement events, and level maps (`technicals.py`), rules-based backtests (`backtest.py`), thematic baskets (`themes.py`), and the policy monitor and FOMC event study (`fed.py`).
 3. `run_all.py` runs every study, writes charts and downloadable CSV tables, and merges the generated results into the narrative files in `research/`.
 4. `.github/workflows/weekly-update.yml` runs the tests and the build every Saturday and on every push, then publishes `site/` to GitHub Pages.
@@ -59,8 +59,9 @@ Requires Python 3.10 or later.
 
 ```bash
 pip install -r requirements.txt
-pytest -q              # offline tests on synthetic data
-python run_all.py      # downloads data and writes the site to ./site
+pytest -q                          # offline tests on synthetic data
+export FRED_API_KEY=your_key_here  # free key from fred.stlouisfed.org
+python run_all.py                  # downloads data and writes the site to ./site
 ```
 
 Then open `site/index.html` in a browser.
