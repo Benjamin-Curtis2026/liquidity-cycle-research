@@ -19,6 +19,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,6 +44,8 @@ jobs:
           restore-keys: market-data-
 
       - name: Download data, run studies, build site
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python run_all.py
 
       - name: Configure Pages

@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 from datetime import datetime, timezone
@@ -67,10 +68,14 @@ def weekly_close(prices: dict, ticker: str) -> pd.Series:
 # Context
 # ---------------------------------------------------------------------------
 def load_context() -> dict:
-    fred = data.load_fred(config.FRED_SERIES)
-    for required in ("WALCL", "WTREGEN", "RRPONTSYD"):
-        if required not in fred:
-            raise SystemExit(f"Required FRED series {required} is unavailable; cannot build.")
+    required = ["WALCL", "WTREGEN", "RRPONTSYD"]
+    fred = data.load_fred(required)
+    missing = [sid for sid in required if sid not in fred]
+    if missing:
+        hint = "" if os.environ.get("FRED_API_KEY") else (
+            " FRED_API_KEY is not set; add it as a repository secret (see SETUP.md).")
+        raise SystemExit(f"Required FRED series unavailable: {', '.join(missing)}.{hint}")
+    fred.update(data.load_fred([sid for sid in config.FRED_SERIES if sid not in fred]))
     prices = data.load_prices(config.all_tickers())
     liq = liquidity.add_regime(liquidity.net_liquidity(fred))
     weekly = {t: tech.weekly_with_mas(prices[t], t) for t in config.CORE_ASSETS if t in prices}
