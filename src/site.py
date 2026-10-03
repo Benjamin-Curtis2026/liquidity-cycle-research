@@ -56,6 +56,7 @@ h2 {
   margin: 3rem 0 .8rem; padding-top: 1.1rem; border-top: 1px solid var(--rule);
 }
 h3 { font-family: var(--sans); font-size: 1rem; font-weight: 600; margin: 2rem 0 .4rem; }
+h4 { font-family: var(--sans); font-size: .9rem; font-weight: 600; color: var(--muted); margin: 1.6rem 0 .3rem; }
 a { color: var(--link); text-underline-offset: 3px; }
 a:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; border-radius: 2px; }
 ul, ol { padding-left: 1.3rem; }

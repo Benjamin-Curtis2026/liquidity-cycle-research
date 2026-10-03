@@ -105,7 +105,7 @@ def load_fred(series_ids) -> dict[str, pd.Series]:
     out = {}
     for sid in series_ids:
         try:
-            out[sid] = fred_series(sid)
+            out[sid] = fred_series(sid, config.SERIES_START.get(sid, config.START_DATE))
         except Exception as err:  # noqa: BLE001
             log.error("FRED %s unavailable: %s", sid, err)
     return out

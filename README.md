@@ -15,6 +15,9 @@ The site is rebuilt every week by GitHub Actions from public data, so every char
 | [Liquidity regime and trend](research/03-liquidity-regime-and-trend.md) | Does conditioning exposure on the liquidity impulse and the 50-week trend improve risk-adjusted returns? | Rules-based backtest with costs and T-bill cash yield, sub-period Sharpe, Welch's t-test |
 | [The AI infrastructure trade](research/04-ai-infrastructure-trade.md) | How do compute, software, photonics, nuclear power, and crypto compare on trend, momentum, and liquidity sensitivity? | Equal-weight baskets, relative strength, beta, ETF cross-check |
 | [Fed policy monitor and FOMC event study](research/05-fed-policy-monitor.md) | Where does policy stand, what is priced, and how do assets move on decision days? | Policy dashboard, decision-day event study by hike, cut, or hold |
+| [Rate expectations, policy rules, and recession risk](research/06-rate-expectations-and-macro.md) | What rate path are markets pricing, how does policy compare with Taylor-type rules, and how high is recession risk? | Probability distributions from Kalshi and Polymarket contracts, Taylor rules, yield-curve probit, Sahm rule |
+| [Cross-asset risk and financial conditions](research/07-cross-asset-risk.md) | How tight are financial conditions, and how stable are correlations across crypto, equities, bonds, and gold? | Percentile and z-score monitors, realized volatility, drawdowns, Sharpe ratios, correlation matrix |
+| [Buying fear: testing fear and greed extremes](research/08-buying-fear.md) | Do Bitcoin and U.S. stocks pay off when bought in fear or extreme fear? | Regime-conditional returns, entry-event study with permutation test, sentiment-based dollar-cost averaging, a four-factor equity sentiment composite |
 
 Each study states its question, data, and method, reports results against a baseline, and lists its limitations.
 
@@ -43,6 +46,9 @@ liquidity-cycle-research/
 │   ├── backtest.py           Regime and trend rules, costs, performance statistics
 │   ├── themes.py             Thematic baskets and statistics
 │   ├── fed.py                Policy monitor and FOMC event study
+│   ├── expectations.py       Prediction-market rate distributions, Taylor rules, recession models
+│   ├── risk.py               Financial conditions, volatility, drawdowns, correlations
+│   ├── sentiment.py          Fear and greed indexes, regime tests, sentiment-based DCA
 │   ├── stats.py              Permutation test, correlation, performance metrics
 │   ├── charts.py             Matplotlib charts
 │   ├── fmt.py                Number formatting and Markdown tables
@@ -72,9 +78,11 @@ Tickers, basket membership, and every parameter (moving-average windows, retrace
 
 ## Data
 
-- Federal Reserve Bank of St. Louis, FRED: WALCL, WTREGEN, RRPONTSYD, DFEDTARU, DFEDTARL, DFF, DTB3, DGS2, DGS10, T10Y2Y, DFII10, M2SL.
+- Federal Reserve Bank of St. Louis, FRED: 32 series covering the Fed balance sheet, policy rates, Treasury yields, inflation, labor, GDP, credit spreads, volatility, financial conditions, the dollar, and oil (full list in [`src/config.py`](src/config.py)).
 - Yahoo Finance via `yfinance`: split- and dividend-adjusted daily prices.
 - Board of Governors of the Federal Reserve System: FOMC meeting calendars.
+- Kalshi and Polymarket public market-data APIs: Fed rate and decision contracts.
+- Alternative.me: Crypto Fear & Greed Index.
 
 ## Disclaimer
 

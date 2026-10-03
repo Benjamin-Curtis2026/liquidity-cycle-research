@@ -51,11 +51,99 @@ def synthetic_fred() -> dict:
     dff = upper - 0.17
     dgs2 = upper + rng.normal(-0.2, 0.2, len(day))
     dgs10 = dgs2 + 0.5
+    month = pd.date_range(config.START_DATE, END, freq="MS")
+    quarter = pd.date_range(config.START_DATE, END, freq="QS")
+    week_fri = pd.date_range(config.START_DATE, END, freq="W-FRI")
+    gdp = pd.Series(15000 * np.exp(np.cumsum(rng.normal(0.005, 0.006, len(quarter)))), index=quarter)
     return {
         "WALCL": walcl, "WTREGEN": tga, "RRPONTSYD": rrp, "DFEDTARU": upper, "DFEDTARL": upper - 0.25,
         "DFF": dff, "DTB3": dff - 0.05, "DGS2": dgs2, "DGS10": dgs10, "T10Y2Y": dgs10 - dgs2,
         "DFII10": dgs10 - 2.2,
+        "CPIAUCSL": pd.Series(220 * np.exp(np.cumsum(rng.normal(0.002, 0.002, len(month)))), index=month),
+        "CPILFESL": pd.Series(225 * np.exp(np.cumsum(rng.normal(0.002, 0.001, len(month)))), index=month),
+        "PCEPILFE": pd.Series(100 * np.exp(np.cumsum(rng.normal(0.0018, 0.001, len(month)))), index=month),
+        "UNRATE": pd.Series(np.clip(5 + np.cumsum(rng.normal(0, 0.1, len(month))), 3, 10), index=month),
+        "PAYEMS": pd.Series(130000 + np.cumsum(rng.normal(150, 80, len(month))), index=month),
+        "SAHMREALTIME": pd.Series(np.abs(rng.normal(0.2, 0.15, len(month))), index=month),
+        "GDPC1": gdp, "GDPPOT": gdp * (1 + rng.normal(0, 0.01, len(quarter))),
+        "T10Y3M": dgs10 - (dff - 0.05), "T10YIE": pd.Series(2.2 + rng.normal(0, 0.1, len(day)), index=day),
+        "T5YIFR": pd.Series(2.3 + rng.normal(0, 0.1, len(day)), index=day),
+        "USREC": pd.Series(((month >= "2020-03-01") & (month <= "2020-04-01")).astype(float), index=month),
+        "VIXCLS": pd.Series(np.abs(18 + np.cumsum(rng.normal(0, 0.5, len(day)))) % 40 + 10, index=day),
+        "BAMLH0A0HYM2": pd.Series(np.clip(4 + np.cumsum(rng.normal(0, 0.03, len(day))), 2.5, 10), index=day),
+        "BAMLC0A0CM": pd.Series(np.clip(1.2 + np.cumsum(rng.normal(0, 0.01, len(day))), 0.8, 3), index=day),
+        "NFCI": pd.Series(rng.normal(-0.4, 0.2, len(week_fri)), index=week_fri),
+        "DTWEXBGS": pd.Series(110 + np.cumsum(rng.normal(0, 0.2, len(day))), index=day),
+        "DCOILWTICO": pd.Series(np.clip(70 + np.cumsum(rng.normal(0, 1, len(day))), 20, 140), index=day),
     }
+
+
+TODAY = pd.Timestamp.now(tz="UTC").tz_localize(None).normalize()
+MEETING_1 = TODAY + pd.Timedelta(days=25)
+MEETING_2 = TODAY + pd.Timedelta(days=67)
+
+
+def kalshi_payload():
+    """Mimics GET /events?series_ticker=KXFED&with_nested_markets=true (documented fields)."""
+    def ev(code, date, probs):
+        return {"event_ticker": f"KXFED-{code}", "strike_date": f"{date}T18:00:00Z", "markets": [
+            {"ticker": f"KXFED-{code}-T{k:.2f}", "floor_strike": k, "strike_type": "greater",
+             "yes_bid_dollars": f"{max(p - 0.01, 0):.4f}", "yes_ask_dollars": f"{min(p + 0.01, 1):.4f}",
+             "last_price_dollars": f"{p:.4f}", "volume_fp": "1000.00"} for k, p in probs.items()]}
+    return {"events": [
+        ev("M1", f"{MEETING_1:%Y-%m-%d}", {3.25: 0.99, 3.50: 0.97, 3.75: 0.80, 4.00: 0.10, 4.25: 0.02}),
+        ev("M2", f"{MEETING_2:%Y-%m-%d}", {3.25: 0.97, 3.50: 0.85, 3.75: 0.55, 4.00: 0.15, 4.25: 0.04}),
+    ], "cursor": ""}
+
+
+def polymarket_payload():
+    return {"events": [{"title": f"Fed decision in {MEETING_1:%B}?", "endDate": f"{MEETING_1:%Y-%m-%d}T00:00:00Z",
+                        "closed": False, "slug": "fed-decision", "markets": [
+        {"groupItemTitle": "50+ bps decrease", "outcomes": "[\"Yes\", \"No\"]", "outcomePrices": "[\"0.02\", \"0.98\"]"},
+        {"groupItemTitle": "25 bps decrease", "outcomes": "[\"Yes\", \"No\"]", "outcomePrices": "[\"0.18\", \"0.82\"]"},
+        {"groupItemTitle": "No change", "outcomes": "[\"Yes\", \"No\"]", "outcomePrices": "[\"0.72\", \"0.28\"]"},
+        {"groupItemTitle": "25+ bps increase", "outcomes": "[\"Yes\", \"No\"]", "outcomePrices": "[\"0.08\", \"0.92\"]"},
+    ]}]}
+
+
+def synthetic_crypto_fng():
+    idx = pd.date_range("2018-02-01", END, freq="D")
+    rng = np.random.default_rng(5)
+    v = 50 + 30 * np.sin(np.arange(len(idx)) / 60) + rng.normal(0, 8, len(idx))
+    return pd.Series(np.clip(v, 1, 99), index=idx, name="crypto_fng")
+
+
+def test_sentiment_regimes_events_and_dca():
+    from src import sentiment as se
+    assert list(se.classify(pd.Series([10, 30, 50, 60, 90])).values) == \
+        ["Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"]
+    s = pd.Series([50, 20, 18, 30, 50, 22, 50], index=pd.date_range("2024-01-01", periods=7))
+    assert se.entry_events(s, 25, cooldown=1) == [s.index[1], s.index[5]]
+    assert se.entry_events(s, 25, cooldown=10) == [s.index[1]]
+    fng = synthetic_crypto_fng()
+    close = synthetic_prices(["BTC-USD"])["BTC-USD"]["Close"]
+    curves, stats = se.dca_compare(close, fng, None, rule="W-SUN")
+    assert curves.shape[1] == 3 and (stats["Contributed"] == stats["Contributed"].iloc[0]).all()
+    assert stats.iloc[0]["Weeks buying"] == len(curves)
+
+
+def test_kalshi_ladder_to_distribution():
+    from src import expectations as ex
+    path = ex.parse_kalshi_events(kalshi_payload()["events"], current_upper=4.00)
+    assert path is not None and len(path) == 2
+    oct_ = path.iloc[0]
+    assert abs(oct_["dist"].sum() - 1) < 1e-9
+    # "above 3.75" -> P(upper >= 4.00) = 0.80, "above 4.00" -> P(>= 4.25) = 0.10, so P(4.00) = 0.70
+    assert abs(oct_["dist"][4.00] - 0.70) < 0.02
+    assert oct_["mode"] == 4.00
+    b = ex.to_buckets(pd.Series(oct_["dist"].to_numpy(), index=oct_["dist"].index - 4.00))
+    assert abs(b["Hold"] - 0.70) < 0.02 and abs(b.sum() - 1) < 1e-9
+
+
+def test_polymarket_buckets():
+    from src import expectations as ex
+    b = ex.parse_polymarket_event(polymarket_payload()["events"][0])
+    assert abs(b["Hold"] - 0.72) < 1e-9 and abs(b["Cut 50+ bp"] - 0.02) < 1e-9 and abs(b["Hike 25 bp"] - 0.08) < 1e-9
 
 
 def test_retracement_event_detection():
@@ -91,6 +179,14 @@ def test_full_build(tmp_path, monkeypatch):
     import run_all
     from src import data
 
+    from src import expectations as ex
+
+    def fake_get_json(url, params=None, timeout=20):
+        return kalshi_payload() if "kalshi" in url else polymarket_payload()
+
+    monkeypatch.setattr(ex, "_get_json", fake_get_json)
+    from src import sentiment as se
+    monkeypatch.setattr(se, "crypto_fear_greed", synthetic_crypto_fng)
     monkeypatch.setattr(data, "load_fred", lambda ids: synthetic_fred())
     monkeypatch.setattr(data, "load_prices", lambda tickers: synthetic_prices(tickers))
     monkeypatch.setattr(run_all, "OUT", tmp_path / "site")
@@ -102,7 +198,11 @@ def test_full_build(tmp_path, monkeypatch):
     for key, *_ in run_all.REPORTS:
         page = (out / "research" / f"{key}.html").read_text()
         assert "<!-- RESULTS -->" not in page and "<!-- KEY_FINDINGS -->" not in page
-    assert len(list((out / "assets").glob("*.png"))) >= 10
+    assert len(list((out / "assets").glob("*.png"))) >= 18
+    index = (out / "index.html").read_text()
+    assert "Rate expectations" in index and "Financial conditions" in index and "Sentiment" in index
+    fg = (out / "research" / "fear-and-greed.html").read_text()
+    assert "Dollar-cost averaging" in fg and "Entries into fear" in fg
 
 
 if __name__ == "__main__":
