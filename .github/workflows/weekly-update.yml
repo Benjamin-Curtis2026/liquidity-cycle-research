@@ -1,0 +1,65 @@
+name: Weekly research build
+
+on:
+  schedule:
+    - cron: "0 14 * * 6"   # Saturdays 14:00 UTC (9:00 a.m. Central during daylight time)
+  workflow_dispatch:         # "Run workflow" button on the Actions tab
+  push:
+    branches: [main]         # any edit to the repository rebuilds the site
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest -q
+
+      - name: Restore cached market data
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: market-data-${{ github.run_id }}
+          restore-keys: market-data-
+
+      - name: Download data, run studies, build site
+        run: python run_all.py
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

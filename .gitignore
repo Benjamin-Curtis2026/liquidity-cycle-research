@@ -1,0 +1,14 @@
+# Generated on every build; published by GitHub Actions, not committed
+site/
+data/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
