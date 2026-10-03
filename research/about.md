@@ -6,4 +6,4 @@ I'm pursuing a Master of Science in Finance to build the formal foundation in as
 
 **Data.** Federal Reserve Bank of St. Louis (FRED) for balance-sheet, rate, and yield series; Yahoo Finance for adjusted daily prices; the Federal Reserve Board for FOMC dates.
 
-**Tools.** Python (pandas, NumPy, SciPy, Matplotlib), automated with GitHub Actions so the site rebuilds and republishes every weekend. I used AI-assisted coding tools in development; the research questions are mine.
+**Tools.** Python (pandas, NumPy, SciPy, Matplotlib), automated with GitHub Actions so the site rebuilds and republishes every week. I used AI-assisted coding tools in development; the research questions are mine.

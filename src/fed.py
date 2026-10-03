@@ -37,7 +37,8 @@ def policy_table(fred: dict, net_liq: pd.Series) -> tuple[pd.DataFrame, pd.Times
     if "WALCL" in fred:
         walcl = fred["WALCL"]
         series["Fed total assets ($bn)"] = walcl / 1000 if walcl.median() > 50_000 else walcl
-    series["Net liquidity ($bn)"] = net_liq
+    # Net liquidity is dated to the Friday it becomes known; show its Wednesday reference date.
+    series["Net liquidity ($bn)"] = net_liq.set_axis(net_liq.index - pd.Timedelta(days=2))
 
     asof = min(s.dropna().index[-1] for s in series.values())
     rows = []

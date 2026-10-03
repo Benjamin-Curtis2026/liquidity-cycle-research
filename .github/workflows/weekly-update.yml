@@ -2,7 +2,7 @@ name: Weekly research build
 
 on:
   schedule:
-    - cron: "0 14 * * 6"   # Saturdays 14:00 UTC (9:00 a.m. Central during daylight time)
+    - cron: "0 6 * * 1"    # Mondays 06:00 UTC, after the weekly crypto close
   workflow_dispatch:         # "Run workflow" button on the Actions tab
   push:
     branches: [main]         # any edit to the repository rebuilds the site

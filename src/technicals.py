@@ -12,11 +12,20 @@ def week_rule(ticker: str) -> str:
     return "W-SUN" if ticker in config.CRYPTO else "W-FRI"
 
 
-def to_weekly(daily: pd.DataFrame, rule: str = "W-FRI") -> pd.DataFrame:
+def to_weekly(daily: pd.DataFrame, rule: str = "W-FRI", complete_only: bool = True) -> pd.DataFrame:
+    """Weekly OHLCV bars labeled by the week's last day.
+
+    With complete_only, a week is kept only once its last day has passed (UTC), so a
+    build that runs mid-week never treats a partial week as a weekly close or shows a
+    week-ending date that is still in the future.
+    """
     agg = {"Open": "first", "High": "max", "Low": "min", "Close": "last", "Volume": "sum"}
     agg = {c: f for c, f in agg.items() if c in daily.columns}
-    weekly = daily.resample(rule).agg(agg)
-    return weekly.dropna(subset=["Close"])
+    weekly = daily.resample(rule).agg(agg).dropna(subset=["Close"])
+    if complete_only:
+        today = pd.Timestamp.now(tz="UTC").normalize().tz_localize(None)
+        weekly = weekly[weekly.index < today]
+    return weekly
 
 
 def add_moving_averages(weekly: pd.DataFrame, windows=config.MA_WINDOWS) -> pd.DataFrame:

@@ -122,7 +122,7 @@ def study_liquidity(ctx) -> tuple[str, str]:
     findings = []
     last = liq.dropna(subset=["impulse_bn"]).iloc[-1]
     findings.append(
-        f"Net liquidity was ${fmt.num(last['net_liquidity'], 0)} billion as of {fmt.date(last.name)}, "
+        f"Net liquidity was ${fmt.num(last['net_liquidity'], 0)} billion as of {fmt.date(last.name - pd.Timedelta(days=2))}, "
         f"{'up' if last['impulse_bn'] >= 0 else 'down'} ${fmt.num(abs(last['impulse_bn']), 0)} billion "
         f"({fmt.pct(last['impulse_pct'])}) over {config.LIQUIDITY_WINDOW} weeks. The regime reads {last['regime'].lower()}."
     )
@@ -382,11 +382,18 @@ def study_themes(ctx) -> tuple[str, str, pd.DataFrame]:
         hb = summary.loc[summary[bcol].idxmax()] if summary[bcol].notna().any() else None
         if hb is not None:
             findings.append(f"Highest 3-year beta to {config.BENCHMARK}: {hb['Theme']} ({fmt.num(hb[bcol], 2)}).")
-        if summary["Liquidity corr."].notna().any():
-            hl = summary.loc[summary["Liquidity corr."].idxmax()]
-            findings.append(
-                f"Highest same-period correlation with 4-week net liquidity changes: {hl['Theme']} "
-                f"(r = {fmt.num(hl['Liquidity corr.'], 2, sign=True)}, p = {fmt.pval(hl['Liquidity p'])}).")
+        lc = summary.dropna(subset=["Liquidity corr."])
+        if not lc.empty:
+            sig = lc[lc["Liquidity p"] < 0.05]
+            if sig.empty:
+                largest = lc["Liquidity corr."].abs().max()
+                findings.append(
+                    "No basket shows a statistically significant same-period correlation with 4-week changes "
+                    f"in net liquidity (largest |r| = {largest:.2f}).")
+            else:
+                findings.append("Significant same-period correlation with 4-week net liquidity changes: " + "; ".join(
+                    f"{r['Theme']} (r = {fmt.num(r['Liquidity corr.'], 2, sign=True)}, p = {fmt.pval(r['Liquidity p'])})"
+                    for _, r in sig.iterrows()) + ".")
 
     disp = summary.copy()
     for c in disp.columns:
@@ -492,6 +499,16 @@ def study_fed(ctx) -> tuple[str, str, pd.DataFrame, dict]:
     if not np.isnan(assets_13):
         findings.append(f"Fed total assets changed {fmt.num(assets_13, 0, sign=True)} billion over 13 weeks "
                         f"(annualized pace {fmt.num(assets_13 * 4, 0, sign=True)} billion).")
+    if "decision" in fomc:
+        past = fomc[fomc["decision"] != "Pending"]
+        if len(past):
+            ld = past.iloc[-1]
+            if ld["decision"] == "Hold":
+                action = "held the target range unchanged"
+            else:
+                verb = "raised" if ld["decision"] == "Hike" else "lowered"
+                action = f"{verb} the target range by {abs(int(ld['change_bp']))} bp"
+            findings.append(f"The most recent decision ({fmt.date(ld['date'])}) {action}.")
     if next_fomc is not None:
         findings.append(f"Next scheduled FOMC decision: {fmt.date(next_fomc)}.")
 
@@ -530,7 +547,7 @@ def build_index(ctx, structure, themes_summary, fed_tbl, fed_meta, testing_now, 
     hero = (
         f'<p class="regime {regime}">Net liquidity is ${fmt.num(last["net_liquidity"], 0)} billion, '
         f'{direction} ${fmt.num(abs(last["impulse_bn"]), 0)} billion over {config.LIQUIDITY_WINDOW} weeks.</p>\n'
-        f'<p class="regime-note">Liquidity regime: {regime}. Balance-sheet data through {fmt.date(last.name)}.'
+        f'<p class="regime-note">Liquidity regime: {regime}. Fed balance sheet as of {fmt.date(last.name - pd.Timedelta(days=2))}.'
         + (f" Next FOMC decision: {fmt.date(next_fomc)}." if next_fomc is not None else "") + "</p>\n"
     )
     parts = ["# Market monitor\n", hero,
