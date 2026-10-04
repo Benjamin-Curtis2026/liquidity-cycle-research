@@ -18,7 +18,7 @@ Correlations matter for portfolio construction. For two decades before 2022, Tre
 
 ## Method
 
-- **Financial conditions.** For the VIX, high-yield and investment-grade credit spreads, the NFCI, the broad dollar index, WTI crude, and the 10-year minus 2-year spread: the latest reading, its 13-week change, and its percentile and z-score within the last five years.
+- **Financial conditions.** For the VIX, high-yield and investment-grade credit spreads, the NFCI, the broad dollar index, WTI crude, and the 10-year minus 2-year spread: the latest reading, its 13-week change, and its percentile and z-score within the last five years, or within the full history available if shorter. The ICE BofA credit-spread series on FRED currently cover roughly the last three years, and the table reports the window used for each indicator.
 - **Risk table.** For each asset, 13 and 52-week returns, realized volatility annualized from weekly returns, the three-year Sharpe ratio in excess of T-bills, the current drawdown from its high, and the worst drawdown of the last three years.
 - **Correlations.** A matrix of weekly log-return correlations over the last two years, plus rolling 26-week correlations for Bitcoin against the Nasdaq-100, Bitcoin against gold, and the S&P 500 against long Treasuries.
 

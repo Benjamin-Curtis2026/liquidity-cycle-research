@@ -53,17 +53,31 @@ def _f(x) -> float:
 # Kalshi
 # ---------------------------------------------------------------------------
 def kalshi_price(m: dict) -> float:
-    """Implied probability for a Kalshi market: bid-ask midpoint, else last trade."""
+    """Implied probability for a Kalshi market, or NaN when the book carries no information.
+
+    - Two-sided market with a spread of 10 cents or less: the midpoint.
+    - Deep out-of-the-money (no bid, ask of 5 cents or less): half the ask.
+    - Near-certain (bid of 95 cents or more, no ask): halfway between the bid and $1.
+    - Otherwise the last trade, if the contract has traded and the trade sits inside the quotes.
+    Empty or very wide books return NaN instead of a meaningless 50-cent midpoint.
+    """
     bid, ask, last = (_f(m.get("yes_bid_dollars")), _f(m.get("yes_ask_dollars")),
                       _f(m.get("last_price_dollars")))
     if math.isnan(bid) and "yes_bid" in m:  # older cent-denominated fields
         bid, ask, last = _f(m.get("yes_bid")) / 100, _f(m.get("yes_ask")) / 100, _f(m.get("last_price")) / 100
-    if bid > 0 and ask > 0 and ask >= bid and ask - bid <= 0.10:
+    bid = 0.0 if math.isnan(bid) else bid
+    ask = 0.0 if math.isnan(ask) else ask
+    if bid > 0 and 0 < ask <= 1 and ask >= bid and ask - bid <= 0.10:
         return (bid + ask) / 2
-    if last > 0:
+    if bid == 0 and 0 < ask <= 0.05:
+        return ask / 2
+    if bid >= 0.95 and (ask == 0 or ask >= 1):
+        return (bid + 1) / 2
+    volume = _f(m.get("volume_fp", m.get("volume")))
+    if last > 0 and (math.isnan(volume) or volume > 0):
+        if ask > 0 and not (bid - 0.02 <= last <= ask + 0.02):
+            return float("nan")
         return last
-    if ask > 0:
-        return (max(bid, 0) + ask) / 2
     return float("nan")
 
 
@@ -109,7 +123,8 @@ def ladder_distribution(markets: list[dict]) -> pd.Series | None:
             continue
         lvl = round(_threshold_level(s, m.get("strike_type")), 4)
         surv[lvl] = max(surv.get(lvl, 0.0), min(max(p, 0.0), 1.0))
-    if len(surv) < 2:
+    # Require a ladder that spans both tails; otherwise the distribution is not identified.
+    if len(surv) < 4 or max(surv.values()) < 0.85 or min(surv.values()) > 0.15:
         return None
     levels = sorted(surv)
     s_vals, prev = [], 1.0
@@ -183,7 +198,7 @@ def parse_kalshi_events(events: list[dict], current_upper: float) -> pd.DataFram
     for ev in events:
         date = _meeting_date(ev)
         dist = ladder_distribution(ev.get("markets", []) or [])
-        if date is None or dist is None or date < today:
+        if date is None or dist is None or date < today or date > today + pd.Timedelta(days=455):
             continue
         summ = dist_summary(dist, current_upper)
         volume = sum(_f(m.get("volume_fp", m.get("volume"))) for m in ev.get("markets", [])
@@ -274,6 +289,12 @@ def polymarket_next_meeting(meeting: pd.Timestamp) -> pd.Series | None:
 # ---------------------------------------------------------------------------
 # Policy rules, recession probability, macro table
 # ---------------------------------------------------------------------------
+def _complete_months(monthly: pd.Series) -> pd.Series:
+    """Drop the current calendar month, which is still incomplete."""
+    this_month = pd.Timestamp.now(tz="UTC").tz_localize(None).to_period("M").to_timestamp()
+    return monthly[monthly.index < this_month]
+
+
 def _yoy(s: pd.Series) -> pd.Series:
     return (s / s.shift(12) - 1) * 100
 
@@ -296,7 +317,7 @@ def recession_probability(fred: dict) -> pd.Series | None:
     if "T10Y3M" not in fred:
         return None
     a, b = config.RECESSION_PROBIT
-    spread = fred["T10Y3M"].resample("MS").mean().dropna()
+    spread = _complete_months(fred["T10Y3M"].resample("MS").mean().dropna())
     return pd.Series(norm.cdf(a + b * spread), index=spread.index, name="recession_prob")
 
 
@@ -320,9 +341,9 @@ def macro_table(fred: dict) -> pd.DataFrame:
     if "PCEPILFE" in fred:
         add("Core PCE inflation, y/y (%)", _yoy(fred["PCEPILFE"].resample("MS").last()), "pct")
     if "T10YIE" in fred:
-        add("10-year breakeven inflation (%)", fred["T10YIE"].resample("MS").mean(), "pct")
+        add("10-year breakeven inflation (%)", _complete_months(fred["T10YIE"].resample("MS").mean()), "pct")
     if "T5YIFR" in fred:
-        add("5y5y forward inflation expectation (%)", fred["T5YIFR"].resample("MS").mean(), "pct")
+        add("5y5y forward inflation expectation (%)", _complete_months(fred["T5YIFR"].resample("MS").mean()), "pct")
     if "UNRATE" in fred:
         add("Unemployment rate (%)", fred["UNRATE"], "pct")
     if "PAYEMS" in fred:

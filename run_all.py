@@ -568,11 +568,12 @@ def study_expectations(ctx, next_fomc) -> tuple[str, str, dict]:
         odds.reset_index().to_csv(TABLES / "next_meeting_odds.csv", index=False)
         for src, b in buckets.items():
             top = b.idxmax()
-            findings.append(f"{src} prices a {fmt.pct(b.max(), 0, sign=False)} probability of "
+            findings.append(f"{src} prices {fmt.article(fmt.pct(b.max(), 0, sign=False))} {fmt.pct(b.max(), 0, sign=False)} probability of "
                             f"{expectations.BUCKET_PHRASES[top]} at the {fmt.date(meeting)} FOMC meeting.")
         k = buckets.get("Kalshi", next(iter(buckets.values())))
         src = "Kalshi" if "Kalshi" in buckets else next(iter(buckets))
-        meta["odds_text"] = f"{src} prices a {fmt.pct(k.max(), 0, sign=False)} probability of {expectations.BUCKET_PHRASES[k.idxmax()]}."
+        pk = fmt.pct(k.max(), 0, sign=False)
+        meta["odds_text"] = f"{src} prices {fmt.article(pk)} {pk} probability of {expectations.BUCKET_PHRASES[k.idxmax()]}."
         meta["odds_table"] = tbl
     else:
         results.append("_Prediction-market data was unavailable for this build._\n")
@@ -632,7 +633,7 @@ def study_expectations(ctx, next_fomc) -> tuple[str, str, dict]:
     rp = expectations.recession_probability(fred)
     if rp is not None and len(rp):
         charts.recession_chart(rp, fred.get("USREC"), ASSETS / "recession.png")
-        spread = fred["T10Y3M"].resample("MS").mean().dropna()
+        spread = fred["T10Y3M"].resample("MS").mean().dropna().reindex(rp.index)
         findings.append(
             f"The yield-curve model puts the probability of a recession within 12 months at "
             f"{fmt.pct(rp.iloc[-1], 0, sign=False)}, from a 10-year minus 3-month spread averaging "
@@ -677,10 +678,10 @@ def study_risk(ctx) -> tuple[str, str, pd.DataFrame]:
         disp = pd.DataFrame({
             "Indicator": ct["Indicator"], "Latest": ct["Latest"].map(lambda v: fmt.num(v, 2)),
             "As of": ct["As of"].map(fmt.date), "13W change": ct["13W change"].map(lambda v: fmt.num(v, 2, sign=True)),
-            f"{config.CONDITIONS_LOOKBACK_YEARS}-year percentile": ct["Percentile"].map(lambda v: fmt.pct(v, 0, sign=False)),
+            "Percentile": ct["Percentile"].map(fmt.ordinal),
             "z-score": ct["z-score"].map(lambda v: fmt.num(v, 2, sign=True)),
-            f"{config.CONDITIONS_LOOKBACK_YEARS}-year range": [f"{fmt.num(a, 2)} to {fmt.num(b, 2)}"
-                                                              for a, b in zip(ct["Window low"], ct["Window high"])],
+            "Range": [f"{fmt.num(a, 2)} to {fmt.num(b, 2)}" for a, b in zip(ct["Window low"], ct["Window high"])],
+            "Window": ct["Window years"].map(lambda v: f"{v:.1f} yrs"),
         })
         results.append(fmt.md_table(disp))
         ct.to_csv(TABLES / "financial_conditions.csv", index=False)
@@ -688,8 +689,8 @@ def study_risk(ctx) -> tuple[str, str, pd.DataFrame]:
             r = ct[ct["series"] == key]
             if len(r):
                 r = r.iloc[0]
-                findings.append(f"{r['Indicator']} at {r['Latest']:.2f}, the {fmt.pct(r['Percentile'], 0, sign=False)} "
-                                f"percentile of its {config.CONDITIONS_LOOKBACK_YEARS}-year range "
+                findings.append(f"{r['Indicator']} at {r['Latest']:.2f}, the {fmt.ordinal(r['Percentile'])} "
+                                f"percentile of its last {r['Window years']:.0f} years "
                                 f"({fmt.num(r['13W change'], 2, sign=True)} over 13 weeks).")
         r = ct[ct["series"] == "NFCI"]
         if len(r):
@@ -702,7 +703,7 @@ def study_risk(ctx) -> tuple[str, str, pd.DataFrame]:
     results.append("### Volatility, drawdowns, and risk-adjusted returns\n")
     if not at.empty:
         disp = at.copy()
-        for c in ("13W", "52W", "Drawdown from high", "Max drawdown 3Y"):
+        for c in ("13W", "52W", "From peak", "Max drawdown 3Y"):
             disp[c] = disp[c].map(fmt.pct)
         for c in ("Vol 13W", "Vol 52W"):
             disp[c] = disp[c].map(lambda v: fmt.pct(v, 1, sign=False))
@@ -946,8 +947,8 @@ def build_index(ctx, structure, themes_summary, fed_tbl, fed_meta, testing_now, 
         c = conditions[["Indicator", "Latest", "13W change", "Percentile"]].copy()
         c["Latest"] = c["Latest"].map(lambda v: fmt.num(v, 2))
         c["13W change"] = c["13W change"].map(lambda v: fmt.num(v, 2, sign=True))
-        c["Percentile"] = c["Percentile"].map(lambda v: fmt.pct(v, 0, sign=False))
-        c = c.rename(columns={"Percentile": f"{config.CONDITIONS_LOOKBACK_YEARS}-year percentile"})
+        c["Percentile"] = conditions["Percentile"].map(fmt.ordinal)
+        c = c.rename(columns={"Percentile": "Percentile (up to 5 years)"})
         parts.append(fmt.md_table(c))
         parts.append("[Cross-asset risk and financial conditions](research/cross-asset-risk.html).\n")
     if sentiment_now is not None and not sentiment_now.empty:

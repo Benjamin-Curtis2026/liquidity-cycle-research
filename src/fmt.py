@@ -46,6 +46,21 @@ def date(x) -> str:
     return f"{ts:%b} {ts.day}, {ts:%Y}"
 
 
+def article(text: str) -> str:
+    """'a' or 'an' for a phrase that starts with a number, e.g. an 82% probability."""
+    t = text.lstrip()
+    return "an" if t[:1] == "8" or t[:2] in ("11", "18") else "a"
+
+
+def ordinal(p: float) -> str:
+    """0.75 -> '75th'."""
+    if _missing(p):
+        return DASH
+    n = int(round(p * 100))
+    suffix = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f"{n}{suffix}"
+
+
 def md_table(df: pd.DataFrame) -> str:
     """Render a DataFrame of preformatted strings as a Markdown table."""
     if df is None or df.empty:

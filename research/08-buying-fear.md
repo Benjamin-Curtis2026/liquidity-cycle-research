@@ -33,7 +33,7 @@ The study tests three versions of the claim:
 | Safe-haven demand | 20-day S&P 500 return minus 20-day long-Treasury (TLT) return | Stocks are outperforming bonds |
 | Junk-bond demand | High-yield option-adjusted spread | Spreads are narrow |
 
-Each component is converted to its percentile rank within the trailing two years (0 = most fearful), so the score at any date uses only data available on that date. The composite is the average of the available components. It is tested against the S&P 500 and the Nasdaq-100.
+Each component is converted to its percentile rank within the trailing two years (0 = most fearful), so the score at any date uses only data available on that date. The composite is the average of the available components. The high-yield spread series available on FRED covers roughly the last three years, so for most of the sample the composite is built from the other three components. It is tested against the S&P 500 and the Nasdaq-100.
 
 Both indexes use the same regime bands: below 25 extreme fear, 25 to 44 fear, 45 to 55 neutral, 56 to 75 greed, and above 75 extreme greed.
 

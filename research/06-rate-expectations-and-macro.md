@@ -18,7 +18,8 @@ Polymarket lists a separate market on the next decision (hold, cut, or hike by s
 
 Method details:
 
-- Each contract's price is the midpoint of the best bid and ask when the spread is 10 cents or less, otherwise the last trade.
+- Each contract's price is the midpoint of the best bid and ask when the spread is 10 cents or less. A contract with no bid and an ask of 5 cents or less is priced at half the ask, and one bid at 95 cents or more with no ask at halfway to $1. Otherwise the last trade is used if the contract has traded; empty or very wide books are excluded rather than read as a 50% probability.
+- A meeting is reported only if its ladder has at least four priced rungs and spans both tails (one rung at 85% or higher, one at 15% or lower), and only for meetings within roughly 15 months, where contracts trade actively enough to be informative.
 - Where prices on adjacent rungs violate monotonicity (a higher strike priced above a lower one), the survival function is forced to be non-increasing before differencing.
 - Probabilities are normalized to sum to one.
 

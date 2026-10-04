@@ -39,6 +39,7 @@ def conditions_table(fred: dict, years: int = config.CONDITIONS_LOOKBACK_YEARS) 
             "Percentile": float((window <= s.iloc[-1]).mean()),
             "z-score": float(z),
             "Window low": float(window.min()), "Window high": float(window.max()),
+            "Window years": (last_date - window.index[0]).days / 365.25,
         })
     return pd.DataFrame(rows)
 
@@ -64,7 +65,7 @@ def asset_risk_table(prices: dict, rf_weekly: pd.Series | None = None) -> pd.Dat
             "Vol 13W": r.iloc[-13:].std() * math.sqrt(52),
             "Vol 52W": r.iloc[-52:].std() * math.sqrt(52),
             "Sharpe 3Y": ex.mean() / ex.std() * math.sqrt(52) if ex.std() > 0 else np.nan,
-            "Drawdown from high": c.iloc[-1] / c.cummax().iloc[-1] - 1,
+            "From peak": c.iloc[-1] / c.cummax().iloc[-1] - 1,
             "Max drawdown 3Y": float((c.iloc[-156:] / c.iloc[-156:].cummax() - 1).min()),
         })
     return pd.DataFrame(rows)

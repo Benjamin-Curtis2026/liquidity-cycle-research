@@ -140,6 +140,15 @@ def test_kalshi_ladder_to_distribution():
     assert abs(b["Hold"] - 0.70) < 0.02 and abs(b.sum() - 1) < 1e-9
 
 
+def test_kalshi_rejects_empty_books():
+    from src import expectations as ex
+    empty = [{"ticker": f"KXFED-X-T{k:.2f}", "floor_strike": k, "strike_type": "greater",
+              "yes_bid_dollars": "0.0000", "yes_ask_dollars": "1.0000", "last_price_dollars": "0.0000",
+              "volume_fp": "0.00"} for k in (3.0, 3.25, 3.5, 3.75, 4.0)]
+    assert ex.ladder_distribution(empty) is None
+    assert abs(ex.kalshi_price({"yes_bid_dollars": "0", "yes_ask_dollars": "0.02"}) - 0.01) < 1e-9
+
+
 def test_polymarket_buckets():
     from src import expectations as ex
     b = ex.parse_polymarket_event(polymarket_payload()["events"][0])
